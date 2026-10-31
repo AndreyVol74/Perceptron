@@ -1,1 +1,1 @@
-![Классификация точки](https://github.com/AndreyVol74/Perceptron/blob/main/Классификация точки.png?raw=true)
+![Классификация точки](Классификация%20точки.png)
