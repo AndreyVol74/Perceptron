@@ -1,0 +1,106 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+class Perceptron:
+    def __init__(self, input_dim, output_dim, learning_rate=0.01, epochs=1000):
+        self.learning_rate = learning_rate
+        self.epochs = epochs
+        self.weights = np.random.randn(output_dim, input_dim) * 0.01
+
+    def softmax(self, z):
+        exp_z = np.exp(z)
+        sum_exp_z = np.sum(exp_z, axis=0, keepdims=True)
+        return exp_z / sum_exp_z
+
+    def forward(self, X):
+        Z2 = np.dot(self.weights, X)
+        H2 = self.softmax(Z2)
+        predicted_class = np.argmax(H2, axis=0) + 1
+        return predicted_class, H2
+
+    def backward(self, X, Y, H2):
+        m = Y.shape[1]
+        gradient = (H2 - Y) * H2 * (1 - H2)
+        dW = np.dot(gradient, X.T) / m
+        self.weights -= self.learning_rate * dW
+
+    def optimize_weights(self, X, Y):
+        for epoch in range(self.epochs):
+            predicted_class, H2 = self.forward(X)
+            self.backward(X, Y, H2)
+
+    def predict(self, X):
+        predicted_class, _ = self.forward(X)
+        return predicted_class
+
+X_train = np.array([
+    [5, 5], [2, -3.8], [3, 6.5], [4, 10.2], [5, 13.1],
+    [-2, -2], [-1, 6], [-5, 8], [-6, 6], [-7, 7],
+    [-9, -8], [-5, -4], [-4, -3], [2, -4], [3, -7],
+    [6, -6], [4, -5]
+]).T
+
+H1 = np.vstack([X_train, np.ones(X_train.shape[1])])
+
+Y_train = np.array([
+    1 if x > 0 and y > 0 else
+    2 if x < 0 and y > 0 else
+    3 if x < 0 and y < 0 else
+    4 for x, y in X_train.T
+])
+
+Y_one_hot = np.eye(4)[Y_train - 1].T
+
+perceptron = Perceptron(input_dim=3, output_dim=4, learning_rate=0.01, epochs=1000)
+perceptron.optimize_weights(H1, Y_one_hot)
+
+grid_size = 10
+x_values = np.linspace(-15, 15, grid_size)
+y_values = np.linspace(-15, 15, grid_size)
+X_grid, Y_grid = np.meshgrid(x_values, y_values)
+
+grid_points = np.array([[X_grid[i, j], Y_grid[i, j], 1] for i in range(grid_size) for j in range(grid_size)]).T
+
+grid_labels, _ = perceptron.forward(grid_points)
+
+X_test = np.array([[5, -8], [7, 6], [-6, 3], [-3, -3]])
+
+H_test = np.vstack([X_test.T, np.ones(X_test.shape[0])])
+
+predicted_quarter = perceptron.predict(H_test)
+
+plt.figure(figsize=(12, 12))
+
+colors = ['yellow', 'blue', 'black', 'green']
+labels = ['1 четверть', '2 четверть', '3 четверть', '4 четверть']
+
+for i, (x, y) in enumerate(zip(grid_points[0], grid_points[1])):
+    plt.scatter(x, y, color=colors[grid_labels[i] - 1], marker='o', s=100, edgecolors='black')
+
+for x in x_values:
+    plt.axvline(x, color='blue', linewidth=0.5)
+for y in y_values:
+    plt.axhline(y, color='blue', linewidth=0.5)
+
+for i in range(1, 5):
+    x_quad = X_train[0, Y_train == i]
+    y_quad = X_train[1, Y_train == i]
+    plt.scatter(x_quad, y_quad, color=colors[i-1], marker='s', s=100, edgecolors='black', label=labels[i-1])
+
+plt.axhline(0, color='black', linestyle='-', linewidth=1)
+plt.axvline(0, color='black', linestyle='-', linewidth=1)
+
+plt.xlim(-15, 15)
+plt.ylim(-15, 15)
+
+plt.xlabel("X")
+plt.ylabel("Y")
+plt.title("Классификация точек перцептроном")
+plt.legend()
+
+for i, point in enumerate(X_test):
+    x, y = point
+    label = predicted_quarter[i]
+    plt.scatter(x, y, color=colors[label - 1], marker='x', s=150)
+
+plt.show()
