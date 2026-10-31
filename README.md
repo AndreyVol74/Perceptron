@@ -1,1 +1,3 @@
-![Uploading image.png…]()
+
+![Uploading Классификация точки.png…]()
+
